@@ -12,6 +12,7 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
@@ -34,7 +35,7 @@ include(":core:data")
 include(":core:database")
 include(":run:data")
 include(":run:domain")
-include(":run:domaine")
+//include(":run:domaine")
 include(":run:presentation")
 include(":run:location")
 include(":run:network")

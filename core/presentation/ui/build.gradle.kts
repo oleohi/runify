@@ -1,5 +1,5 @@
 plugins {
-    alias(libs.plugins.runify.android.library)
+    alias(libs.plugins.runify.android.library.compose)
 }
 
 android {

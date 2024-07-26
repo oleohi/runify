@@ -1,10 +1,12 @@
 plugins {
-    alias(libs.plugins.android.library)
+    alias(libs.plugins.runify.android.library)
     alias(libs.plugins.runify.jvm.ktor)
 }
 
 android {
     namespace = "com.example.auth.data"
+//        compileSdk = 34
+
 }
 
 dependencies {

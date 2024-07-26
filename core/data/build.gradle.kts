@@ -5,7 +5,6 @@ plugins {
 
 android {
     namespace = "com.example.core.data"
-//    compileSdk = 34
 }
 
 

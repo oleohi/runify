@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.runify.android.library)
+    alias(libs.plugins.runify.jvm.ktor)
 }
 
 android {
