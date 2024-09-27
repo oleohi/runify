@@ -1,7 +1,7 @@
 @file:Suppress("OPT_IN_USAGE_FUTURE_ERROR")
 @file:OptIn(ExperimentalFoundationApi::class)
 
-package com.example.auth.presentation.register
+package com.example.auth.presentation.login
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.text2.input.textAsFlow
@@ -18,61 +18,64 @@ import com.example.core.domain.util.Result
 import com.example.core.presentation.ui.UiText
 import com.example.core.presentation.ui.asUiText
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
-class RegisterViewModel(
-    private val userDataValidator: UserDataValidator,
-    private val repository: AuthRepository
+class LoginViewModel(
+    private val authRepository: AuthRepository,
+    private val userDataValidator: UserDataValidator
 ): ViewModel() {
 
-    var state by mutableStateOf(RegisterState())
+    var state by mutableStateOf(LoginState())
         private set
 
-    private val eventChannel = Channel<RegisterEvent>()
+    private val eventChannel= Channel<LoginEvent>()
     val events = eventChannel.receiveAsFlow()
 
     init {
-        state.email.textAsFlow()
-            .onEach { email ->
-                state = state.copy(
-                    isEmailValid = userDataValidator.isValidEmail(email.toString())
-                )
-            }
-            .launchIn(viewModelScope)
-
-        state.password.textAsFlow()
-            .onEach { password ->
-                state = state.copy(
-                    passwordValidationState = userDataValidator.validatePassword(password.toString())
-                )
-            }
-            .launchIn(viewModelScope)
+        combine(state.email.textAsFlow(), state.password.textAsFlow()) { email, password ->
+            state = state.copy(
+                canLogin = userDataValidator.isValidEmail(
+                    email = email.toString().trim()
+                ) && password.isNotEmpty()
+            )
+        }.launchIn(viewModelScope)
     }
 
-    fun onAction(action: RegisterAction) {
+    fun onAction(action: LoginAction) {
+        when(action) {
+            LoginAction.OnLoginClick -> login()
+            LoginAction.OnTogglePasswordVisibility -> {
+                state = state.copy(
+                    isPasswordVisible = !state.isPasswordVisible
+                )
+            } else -> Unit
+        }
+    }
+
+    private fun login() {
         viewModelScope.launch {
-            state = state.copy(isRegistering = true)
-            val result = repository.register(
+            state = state.copy(isLoggingIn = true)
+            val result = authRepository.login(
                 email = state.email.text.toString().trim(),
                 password = state.password.text.toString()
             )
-            state = state.copy(isRegistering = false)
+            state = state.copy(isLoggingIn = false)
 
             when(result) {
                 is Result.Error -> {
-                    if (result.error == DataError.Network.CONFLICT) {
-                        eventChannel.send(RegisterEvent.Error(
-                            UiText.StringResource(R.string.error_email_exists)
+                    if (result.error == DataError.Network.UNAUTHORIZED) {
+                        eventChannel.send(LoginEvent.Error(
+                            UiText.StringResource(R.string.error_email_password_incorrect)
                         ))
                     } else {
-                        eventChannel.send(RegisterEvent.Error(result.error.asUiText()))
+                        eventChannel.send(LoginEvent.Error(result.error.asUiText()))
                     }
                 }
                 is Result.Success -> {
-                    eventChannel.send(RegisterEvent.RegistrationSuccess)
+                    eventChannel.send(LoginEvent.LoginSuccess)
                 }
             }
         }

@@ -67,7 +67,7 @@ fun RegisterScreenRoot(
             RegisterEvent.RegistrationSuccess -> {
                 keyboardController?.hide()
                 Toast.makeText(context, R.string.registration_successful, Toast.LENGTH_SHORT).show()
-                onSuccessfulRegistration
+                onSuccessfulRegistration()
             }
         }
     }
